@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+{% load custom_filters %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List an Item</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<a href="{% url 'home' %}" class="btn btn-secondary mb-3">🏠 Home</a>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">List an Item for Bidding</h2>
+        
+        <!-- Form to List an Item -->
+        <form method="POST" action="{% url 'list_item' %}">
+
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="name" class="form-label">Item Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="base_price" class="form-label">Base Price (Rs)</label>
+                <input type="number" class="form-control" id="base_price" name="base_price" step="0.01" required>
+            </div>
+            <button type="submit" class="btn btn-success">List Item</button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+
+        <!-- Divider -->
+        <hr class="my-5">
+
+        <!-- Display All Listed Items -->
+        <h3 class="text-center mb-4">Your Listed Items</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Base Price</th>
+                    <th>Status</th>
+                    <th>Highest Bid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.unique_code }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>Rs : {{ item.base_price }}</td>
+                    <td>
+                        {% if item.status == "live" %}
+                            <span class="badge bg-success">Live</span>
+                        {% elif item.status == "closed" %}
+                            <span class="badge bg-danger">Closed</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Upcoming</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if highest_bids|get_item:item.id %}
+                            Rs:{{ highest_bids|get_item:item.id }}
+                        {% else %}
+                            No bids yet
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {% if item.status == "upcoming" %}
+                            <a href="{% url 'start_bidding' item.id %}" class="btn btn-primary btn-sm">Start Bidding</a>
+                        {% elif item.status == "live" %}
+                            <a href="{% url 'close_bidding' item.id %}" class="btn btn-danger btn-sm">Close Bidding</a>
+                        {% else %}
+                            <span class="text-danger">Closed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No items listed yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>        
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
