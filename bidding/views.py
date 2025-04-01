@@ -142,10 +142,19 @@ def place_bid(request):
         item = Item.objects.get(id=item_id)
 
         highest_bid = item.bid_set.order_by('-amount').first()
-        if highest_bid is None or bid_amount > highest_bid.amount:
-            Bid.objects.create(item=item, bidder=request.user, amount=bid_amount)
-        else:
-            messages.error(request, "Bid must be higher than the current highest bid.")
+
+        if highest_bid is None:
+            if bid_amount >= item.base_price:
+                Bid.objects.create(item=item, bidder=request.user, amount=bid_amount)
+                messages.success(request, "Your bid has been placed successfully!")
+            else:
+                messages.error(request, f"Bid must be at least Rs {item.base_price}.")
+        else:  
+            if bid_amount > highest_bid.amount:
+                Bid.objects.create(item=item, bidder=request.user, amount=bid_amount)
+                messages.success(request, "Your bid has been placed successfully!")
+            else:
+                messages.error(request, f"Bid must be higher than the current highest bid (Rs {highest_bid.amount}).")
 
     return render(request, 'place_bid.html', {'items': items})
 
@@ -154,7 +163,6 @@ def list_items_for_user(request):
     print("✅ list_items_for_user view called")  
     items = Item.objects.filter(seller=request.user)
 
-    # Create a dictionary mapping each item ID to its highest bid
     highest_bids = {
         bid['item']: bid['max_amount']
         for bid in Bid.objects.values('item').annotate(max_amount=Max('amount'))
